@@ -1,18 +1,38 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>README</h1>
-    <p>This script is used to summarize the text content of a webpage by using the OpenAI API. It uses the <code>requests</code> library to fetch the HTML content of a webpage, <code>html2text</code> to convert the HTML content to plain text, <code>openai</code> to generate a summary of the text content, <code>sys</code> to handle command line arguments, and <code>tomli</code> to read the OpenAI API key and organization from a configuration file.</p>
-    <h2>How to use</h2>
-    <p>To use this script, you need to provide the <code>maxtokens</code> and the <code>URL</code> of the webpage as command line arguments. For example:</p>
-    <pre>python summarizeWebPage.py 100 https://www.example.com</pre>
-    <p>The script also requires an <code>openai.toml</code> file with the API key and organization details for the OpenAI API. The file should contain the following information:</p>
-    <pre>
-[openai]
-apikey = "your_api_key"
-organization = "your_organization"</pre>
-    <p>The script will then fetch the HTML content of the webpage, convert it to plain text, and generate a summary using the OpenAI API. The summary will be printed to the console.</p>
-    <h2>Functionality</h2>
-    <p>The script has two main functions: <code>getTextFromHTML</code> and <code>showTextSummary</code>. The <code>getTextFromHTML</code> function takes a url as input and returns the text content of the webpage, while the <code>showTextSummary</code> function takes in the text content of the webpage and generates a summary using OpenAI API. The script also reads the OpenAI API key and organization from the openai.toml file.</p>
+   <h1>YouTube Transcript Summarizer</h1>
+
+<p>This script uses the <a href="https://pypi.org/project/youtube-transcript-api/">youtube_transcript_api</a> library to retrieve the transcript of a YouTube video in English and German, and the <a href="https://pypi.org/project/openai/">openai</a> library to generate a summary of the transcript.</p>
+
+<h2>Requirements</h2>
+
+<ul>
+  <li>Python 3</li>
+  <li><a href="https://pypi.org/project/youtube-transcript-api/">youtube_transcript_api</a></li>
+  <li><a href="https://pypi.org/project/openai/">openai</a></li>
+  <li><a href="https://pypi.org/project/tomli/">tomli</a></li>
+</ul>
+
+<h2>Usage</h2>
+
+<ol>
+  <li>Replace <code>openai.api_key</code> and <code>openai.organization</code> in <code>openai.toml</code> file with your OpenAI API key and organization.</li>
+  <li>Run the script with the command <code>python youtube_transcript_summarizer.py &lt;max_tokens&gt; &lt;video_id&gt;</code>.</li>
+  <li>The summary will be printed in the console.</li>
+</ol>
+
+<h2>Notes</h2>
+
+<ul>
+  <li>The <code>youtube_transcript_api</code> library uses the YouTube Data API to retrieve the transcript, so you will need to have a YouTube API key set up.</li>
+  <li>The <code>openai</code> library uses the OpenAI API to generate the summary, so you will need to have an OpenAI API key set up.</li>
+  <li>The <code>max_tokens</code> argument determines the maximum number of tokens in the summary.</li>
+  <li>The <code>video_id</code> argument is the YouTube video ID of the video you want to summarize.</li>
+  <li>If an exception is raised, the script will print an error message and exit.</li>
+  <li>The tldr tag will be added at the end of each summary</li>
+  <li>split the text into chunks of 1000 characters and will iterate through each chunk and generate the summary.</li>
+</ul>
+
 </body>
 </html>

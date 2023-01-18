@@ -19,6 +19,7 @@ def getTextFromYoutubeTranscript(id):
     # Concatenate all of the text segments of the transcript together
     transcript_text = ""
     for x in transcript:
+        transcript_text += "-"
         transcript_text += x["text"]
     # Return the full transcript as a string
     return transcript_text

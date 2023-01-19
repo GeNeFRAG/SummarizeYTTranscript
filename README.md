@@ -23,15 +23,15 @@
 </ol>
 
 <h2>Notes</h2>
-
 <ul>
-  <li>The <code>youtube_transcript_api</code> library uses the YouTube Data API to retrieve the transcript, so you will need to have a YouTube API key set up.</li>
-  <li>The <code>openai</code> library uses the OpenAI API to generate the summary, so you will need to have an OpenAI API key set up.</li>
-  <li>The <code>max_tokens</code> argument determines the maximum number of tokens in the summary.</li>
-  <li>The <code>video_id</code> argument is the YouTube video ID of the video you want to summarize.</li>
-  <li>If an exception is raised, the script will print an error message and exit.</li>
-  <li>The tldr tag will be added at the end of each summary</li>
-  <li>split the text into chunks of 1000 characters and will iterate through each chunk and generate the summary.</li>
+  <li>It will use the OpenAI's <code>text-davinci-003</code> model to generate summary</li>
+  <li>The script uses default parameter value of temperature, max_tokens, top_p, frequency_penalty, presence_penalty and echo.</li>
+</ul>
+
+<h2>Limitations</h2>
+<ul>
+  <li>This script uses OpenAI API to generate summary which has usage limit based on the plan you have subscribed to.</li>
+  <li>It will only work for PDF documents.</li>
 </ul>
 
 </body>

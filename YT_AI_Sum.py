@@ -7,6 +7,8 @@ import tomli
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import JSONFormatter
 
+
+# This function attempts to retrieve the transcript of a YouTube video with the given ID in both English and German. If an exception is raised, an error message is printed and the program exits. The text segments of the transcript are concatenated together and returned as a string.
 def getTextFromYoutubeTranscript(id):
     # Attempt to retrieve the transcript of the video in English and German
     try:
@@ -24,6 +26,7 @@ def getTextFromYoutubeTranscript(id):
     # Return the full transcript as a string
     return transcript_text
 
+# This function takes a text as an argument and prints a summary of the text. It first checks if the text is None, and if it is, it returns. Otherwise, it creates a list of models using openai.Model.list(), splits the web content into chunks of 1000 characters, iterates through each chunk and calls the OpenAI API to generate summary for each chunk. Finally, it prints the summary for each chunk with a tldr tag at the end.
 def showTextSummary(text):
     if text is None:
         return

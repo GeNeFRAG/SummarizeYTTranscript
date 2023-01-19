@@ -31,7 +31,6 @@
 <h2>Limitations</h2>
 <ul>
   <li>This script uses OpenAI API to generate summary which has usage limit based on the plan you have subscribed to.</li>
-  <li>It will only work for PDF documents.</li>
 </ul>
 
 </body>

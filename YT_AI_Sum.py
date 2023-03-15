@@ -40,9 +40,10 @@ def showTextSummary(text):
         #iterate through each chunk
         for chunk in string_chunks:
             chunk = chunk + tldr_tag
-            chunk = "Analyse and Summarize following text in short sentences: " + chunk
+            prompt = "Analyse and Summarize following splitted YouTube Transscript in short sentences and reply in " + lang + ": " + chunk
             
             # Call the OpenAI API to generate summary
+            '''
             response = openai.Completion.create(
                 model="text-davinci-003",
                 prompt=chunk,
@@ -55,6 +56,17 @@ def showTextSummary(text):
             )
             # Print the summary
             print(response["choices"][0]["text"])
+            '''
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a super smart academic researcher looking for truth"},
+                    {"role": "user", "content": prompt}, 
+                ]
+            )
+
+            # Print the summary
+            print(response['choices'][0]['message']['content'])
        
     except Exception as e:
         print("Error: Unable to generate summary for the paper.")
@@ -72,11 +84,11 @@ except:
     sys.exit(1)
 
 # Getting max_tokens, video_id from command line
-if len(sys.argv) == 1:
-    raise Exception("Usage: <video id>")
+if len(sys.argv) < 3:
+    raise Exception("Usage: YT_AI_Sum.py <language> <video id>")
     sys.exit(1)
 try:
-    maxtoken = int(sys.argv[1])
+    lang = sys.argv[1]
     id = sys.argv[2]
 except Exception as e:
     print("Error retrieving commandline arguments")

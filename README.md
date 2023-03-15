@@ -18,14 +18,13 @@
 
 <ol>
   <li>Replace <code>openai.api_key</code> and <code>openai.organization</code> in <code>openai.toml</code> file with your OpenAI API key and organization.</li>
-  <li>Run the script with the command <code>python YT_AI_Sum.py &lt;max_tokens&gt; &lt;video_id&gt;</code>.</li>
+  <li>Run the script with the command <code>python YT_AI_Sum.py &lt;language&gt; &lt;video_id&gt;</code>.</li>
   <li>The summary will be printed in the console.</li>
 </ol>
 
 <h2>Notes</h2>
 <ul>
-  <li>It will use the OpenAI's <code>text-davinci-003</code> model to generate summary</li>
-  <li>The script uses default parameter value of temperature, max_tokens, top_p, frequency_penalty, presence_penalty and echo.</li>
+  <li>It will use the OpenAI's <code>gpt-3.5-turbo</code> model to generate summary</li>
 </ul>
 
 <h2>Limitations</h2>

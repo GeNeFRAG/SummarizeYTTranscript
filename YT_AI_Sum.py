@@ -1,11 +1,12 @@
-import youtube_transcript_api
 import json
-import openai
 import sys
-import tomli
 
+import openai
+import tomli
+import youtube_transcript_api
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import JSONFormatter
+
 
 # This function attempts to retrieve the transcript of a YouTube video with the given ID in both English and German. If an exception is raised, an error message is printed and the program exits. The text segments of the transcript are concatenated together and returned as a string.
 def getTextFromYoutubeTranscript(id):

@@ -18,7 +18,7 @@
 
 <ol>
   <li>Replace <code>openai.api_key</code> and <code>openai.organization</code> in <code>openai.toml</code> file with your OpenAI API key and organization.</li>
-  <li>Run the script with the command <code>python YT_AI_Sum.py &lt;language&gt; &lt;video_id&gt;</code>.</li>
+  <li>Run the script with the command <code>python YT_AI_Sum.py --lang English --videoid <i>youtube videoid</i></code>.</li>
   <li>The summary will be printed in the console.</li>
 </ol>
 

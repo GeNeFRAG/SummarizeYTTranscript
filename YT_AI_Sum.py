@@ -7,6 +7,26 @@ import youtube_transcript_api
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import JSONFormatter
 
+def get_arg(arg_name, default=None):
+    """
+    Safely reads a command line argument by name.
+    :param arg_name: the name of the argument to read.
+    :param default: the default value to return if the argument is not found.
+    :return: the value of the argument if found, or the default value.
+    """
+    if "--help" in sys.argv:
+        print("Usage: python Web_AI_Sum.py [--help] [--lang] [--videoid]")
+        print("Arguments:")
+        print("\t--help\t\tHelp\t\tNone")
+        print("\t--lang\t\tLanguage\tEnglish")
+        print("\t--videoid\tYoutube VideoID\tNone")
+        # Add more argument descriptions here as needed
+        sys.exit(0)
+    try:
+        arg_value = sys.argv[sys.argv.index(arg_name) + 1]
+        return arg_value
+    except (IndexError, ValueError):
+        return default
 
 # This function attempts to retrieve the transcript of a YouTube video with the given ID in both English and German. If an exception is raised, an error message is printed and the program exits. The text segments of the transcript are concatenated together and returned as a string.
 def getTextFromYoutubeTranscript(id):
@@ -84,18 +104,13 @@ except:
     print("Error: Unable to read openai.toml file.")
     sys.exit(1)
 
-# Getting max_tokens, video_id from command line
-if len(sys.argv) < 3:
-    raise Exception("Usage: YT_AI_Sum.py <language> <video id>")
+# Getting command line args
+lang = get_arg('--lang','English')
+id = get_arg('--videoid', None)
+if(id == None):
+    print("Type “--help\" for more information.")
     sys.exit(1)
-try:
-    lang = sys.argv[1]
-    id = sys.argv[2]
-except Exception as e:
-    print("Error retrieving commandline arguments")
-    print(e)
-    sys.exit(1)
-    
+
 # get YoutTube transcript as text and show summary
 text=getTextFromYoutubeTranscript(id)
 showTextSummary(text)

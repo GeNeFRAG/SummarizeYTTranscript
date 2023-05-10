@@ -61,13 +61,15 @@ def showTextSummary(text):
         #iterate through each chunk
         for chunk in string_chunks:
             chunk = chunk + tldr_tag
-            prompt = "Analyse and Summarize following YouTube Transscript. Keep the answer short and concise. Respond \"Unsure about answer\" if not sure about the answer. Reply in " + lang + ": " + chunk
+            prompt = "Analyse and Summarize following YouTube Transscript. Keep the answer short and concise. As the transcript texts normally are longer as allowed by ChatGPT it's splittet in chunks of 1000 characters and the prompt is send for each iteration. Respond \"Unsure about answer\" if not sure about the answer. Reply in " + lang + ": " + chunk
             
             # Call the OpenAI API to generate summary
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
+                #model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You are an AI research assistant. You use a tone that is technical and scientific."},
+                    {"role": "system", "content": "You are an AI research assistant. You use a tone that is technical and scientific and the respone grammatically correct in bulletpoint sentances"},
+                    #{"role": "assistant", "content": "Sure! To summarize a YouTube transcript, you can start by identifying the main topic or theme of the Video, and then highlighting the most important information or key points mentioned. You can also condense longer sentences and remove any unnecessary details. Would you like me to provide more details on this?"},
                     {"role": "user", "content": prompt}, 
                 ]
             )

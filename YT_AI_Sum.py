@@ -7,6 +7,25 @@ import youtube_transcript_api
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import JSONFormatter
 
+def get_completion(prompt, model):
+    messages = [{"role": "user", "content": prompt}]
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        temperature=0, # this is the degree of randomness of the model's output
+    )
+    return response.choices[0].message["content"]
+
+def optimize_text_for_api(text, max_tokens):
+    tokenized_text = text.split()  # Tokenize the text by splitting on spaces
+    if len(tokenized_text) > max_tokens:
+        tokenized_text = tokenized_text[:max_tokens]  # Truncate the text to fit within the token limit
+        optimized_text = ' '.join(tokenized_text)  # Join the tokens back into a string
+        print("Text has been optimized to fit within the token limit.")
+        return optimized_text
+    else:
+        return text
+
 def get_arg(arg_name, default=None):
     """
     Safely reads a command line argument by name.
@@ -53,36 +72,37 @@ def showTextSummary(text):
     try:
         # tldr tag to be added at the end of each summary
         tldr_tag = "\n tl;dr:"
-        model_list = openai.Model.list() 
-    
+
         #split the web content into chunks of 1000 characters
         string_chunks = [text[i:i+1000] for i in range(0, len(text), 1000)]
 
         #iterate through each chunk
+        responses = ""
         for chunk in string_chunks:
             chunk = chunk + tldr_tag
-            prompt = "Analyse and Summarize following YouTube Transscript. Keep the answer short and concise. \
-                        As the transcript texts normally are longer as allowed by ChatGPT it's splittet \
-                        in chunks of 1000 characters and the prompt is send for each iteration. \
-                        Respond \"Unsure about answer\" if not sure about the answer. Reply in " + lang + ": " + chunk
+            prompt = f"""You will be provided with text chunks of a YouTube Transscript delimited by triple backtips.\
+                        Your task is to summarize the chunks in an executive summary style. \
+                        Provide the answer in at most 5 bulletpoint sentences and at most 100 words. \
+                        Respond \"Unsure about answer\" if not sure about the answer. \
+                        Reply in Language {lang}.\
+                        ```{chunk}```
+                        """
             
             # Call the OpenAI API to generate summary
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                #model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are an AI research assistant. You use a tone that is \
-                                                    technical and scientific and the respone grammatically correct \
-                                                    in bulletpoint sentances"
-                    },
-                    #{"role": "assistant", "content": "Sure! To summarize a YouTube transcript, you can start by identifying the main topic or theme of the Video, and then highlighting the most important information or key points mentioned. You can also condense longer sentences and remove any unnecessary details. Would you like me to provide more details on this?"},
-                    {"role": "user", "content": prompt}, 
-                ]
-            )
+            response = get_completion(prompt, gptmodel)
 
-            # Print the summary
-            print(response['choices'][0]['message']['content'])
-       
+            # Store the summary
+            responses = responses + response
+            
+        responses = optimize_text_for_api(responses, maxtokens)
+
+        prompt = f"""Your task is to remove duplicate or similar information in provided text delimited by triple backtips. \
+                Your task is to create smooth transitions between each bulletpoint.
+        ```{responses}```
+                """
+        response = get_completion(prompt, gptmodel)
+        print(response)
+
     except Exception as e:
         print("Error: Unable to generate summary for the paper.")
         print(e)
@@ -94,6 +114,8 @@ try:
         data = tomli.load(f)
         openai.api_key=data["openai"]["apikey"]
         openai.organization=data["openai"]["organization"]
+        gptmodel=data["openai"]["model"]
+        maxtokens = int(data["openai"]["maxtokens"])
 except:
     print("Error: Unable to read openai.toml file.")
     sys.exit(1)
@@ -105,6 +127,6 @@ if(id == None):
     print("Type “--help\" for more information.")
     sys.exit(1)
 
-# get YoutTube transcript as text and show summary
+# Get YoutTube transcript as text and show summary
 text=getTextFromYoutubeTranscript(id)
 showTextSummary(text)

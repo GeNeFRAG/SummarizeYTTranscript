@@ -1,11 +1,34 @@
-import json
+import re
+import string
 import sys
 
 import openai
 import tomli
-import youtube_transcript_api
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.formatters import JSONFormatter
+
+
+def split_into_chunks(text, chunk_size=1000, overlap_percentage=1):
+    #split the web content into chunks of 1000 characters
+    text = clean_text(text)
+
+    # Calculate the number of overlapping characters
+    overlap_chars = int(chunk_size * overlap_percentage)
+
+    # Initialize a list to store the chunks
+    chunks = []
+
+    # Loop through the text with the overlap
+    for i in range(0, len(text), chunk_size - overlap_chars):
+        # Determine the end index of the current chunk
+        end_idx = i + chunk_size
+
+        # Slice the text to form a chunk
+        chunk = text[i:end_idx]
+
+        # Append the chunk to the list
+        chunks.append(chunk)
+
+    return chunks
 
 def get_completion(prompt, model, temperature=0):
     messages = [{"role": "user", "content": prompt}]
@@ -16,16 +39,21 @@ def get_completion(prompt, model, temperature=0):
     )
     return response.choices[0].message["content"]
 
-def optimize_text_for_api(text, max_tokens):
-    text = text.replace('\r', ' ').replace('\n', ' ')
-    tokenized_text = text.split()  # Tokenize the text by splitting on spaces
-    if len(tokenized_text) > max_tokens:
-        tokenized_text = tokenized_text[:max_tokens]  # Truncate the text to fit within the token limit
-        optimized_text = ' '.join(tokenized_text)  # Join the tokens back into a string
-        print("Text has been optimized to fit within the token limit.")
-        return optimized_text
-    else:
-        return text
+def clean_text(text):
+    # Remove line breaks and replace with spaces
+    text = text.replace('\n', ' ')
+    
+    # Normalize whitespace (remove extra spaces, tabs, etc.)
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Handle special characters (replace with spaces or remove them)
+    special_characters = string.punctuation + "“”‘’"
+    text = ''.join(char if char not in special_characters else ' ' for char in text)
+    
+    # Remove consecutive spaces
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
 
 def get_arg(arg_name, default=None):
     """
@@ -48,8 +76,10 @@ def get_arg(arg_name, default=None):
     except (IndexError, ValueError):
         return default
 
-# This function attempts to retrieve the transcript of a YouTube video with the given ID in both English and German. If an exception is raised, an error message is printed and the program exits. The text segments of the transcript are concatenated together and returned as a string.
-def getTextFromYoutubeTranscript(id):
+# This function attempts to retrieve the transcript of a YouTube video with the given ID in both English and German.
+# If an exception is raised, an error message is printed and the program exits. 
+# The text segments of the transcript are concatenated together and returned as a string.
+def get_text_yt_transcript(id):
     # Attempt to retrieve the transcript of the video in English and German
     try:
         transcript = YouTubeTranscriptApi.get_transcript(id, languages=['en','de'])
@@ -66,16 +96,20 @@ def getTextFromYoutubeTranscript(id):
     # Return the full transcript as a string
     return transcript_text
 
-# This function takes a text as an argument and prints a summary of the text. It first checks if the text is None, and if it is, it returns. Otherwise, it creates a list of models using openai.Model.list(), splits the web content into chunks of 1000 characters, iterates through each chunk and calls the OpenAI API to generate summary for each chunk. Finally, it prints the summary for each chunk with a tldr tag at the end.
-def showTextSummary(text):
+# This function takes a text as an argument and prints a summary of the text. 
+# It first checks if the text is None, and if it is, it returns. Otherwise, 
+# it creates a list of models using openai.Model.list(), splits the web content into chunks of 1000 characters, 
+# iterates through each chunk and calls the OpenAI API to generate summary for each chunk. 
+# Finally, it prints the summary for each chunk with a tldr tag at the end.
+def show_text_summary(text):
     if text is None:
         return
     try:
         # tldr tag to be added at the end of each summary
         tldr_tag = "\n tl;dr:"
 
-        #split the web content into chunks of 1000 characters
-        string_chunks = [text[i:i+1000] for i in range(0, len(text), 1000)]
+        #split the web content into chunks to fit into the ChatGPT API limits
+        string_chunks = split_into_chunks(text, 9000, 0.5)
 
         #iterate through each chunk
         responses = ""
@@ -90,18 +124,16 @@ def showTextSummary(text):
                         """
             
             # Call the OpenAI API to generate summary
-            response = get_completion(prompt, gptmodel)
-
-            # Store the summary
-            responses = responses + response
+            responses = responses + get_completion(prompt, gptmodel)
             
-        responses = optimize_text_for_api(responses, maxtokens)
+        responses = clean_text(responses)
 
         prompt = f"""Your task is to remove duplicate or similar information in provided text delimited by triple backtips. \
+                Keep the bulletpoint sentance format. \
                 Your task is to create smooth transitions between each bulletpoint.
-        ```{responses}```
+                ```{responses}```
                 """
-        response = get_completion(prompt, gptmodel)
+        response = get_completion(prompt, gptmodel, 0.2)
         print(response)
 
     except Exception as e:
@@ -109,6 +141,7 @@ def showTextSummary(text):
         print(e)
         return None
 
+#START OF SCRIPT
 #Reading out OpenAI API keys and organization
 try:
     with open("openai.toml","rb") as f:
@@ -129,5 +162,5 @@ if(id == None):
     sys.exit(1)
 
 # Get YoutTube transcript as text and show summary
-text=getTextFromYoutubeTranscript(id)
-showTextSummary(text)
+text=get_text_yt_transcript(id)
+show_text_summary(text)

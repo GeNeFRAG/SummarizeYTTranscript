@@ -82,7 +82,7 @@ def get_arg(arg_name, default=None):
 def get_text_yt_transcript(id):
     # Attempt to retrieve the transcript of the video in English and German
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(id, languages=['en','de'])
+        transcript = YouTubeTranscriptApi.get_transcript(id, languages=['en','en-US', 'de'])
     # If an exception is raised, print an error message and exit the program
     except Exception as e:
         print("Error: Unable to retrieve YouTube transcript.")
@@ -126,7 +126,7 @@ def show_text_summary(text):
             
         responses = clean_text(responses)
 
-        prompt = f"""Your task is to remove duplicate or similar information in provided text delimited by triple backtips. \
+        prompt = f"""Your task is to remove duplicate or redundant information in the provided text delimited by triple backtips. \
                 Provide the answer in at most 5 bulletpoint sentences and keep the tone of the text and at most 100 words. \
                 Your task is to create smooth transitions between each bulletpoint.
                 ```{responses}```
@@ -160,5 +160,4 @@ if(id == None):
     sys.exit(1)
 
 # Get YoutTube transcript as text and show summary
-text=get_text_yt_transcript(id)
-show_text_summary(text)
+show_text_summary(get_text_yt_transcript(id))

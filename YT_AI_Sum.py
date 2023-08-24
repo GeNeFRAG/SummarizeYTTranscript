@@ -6,7 +6,12 @@ import openai
 import tomli
 from youtube_transcript_api import YouTubeTranscriptApi
 
+SPECIAL_CHARACTERS = string.punctuation + "“”‘’"
+PATTERN = re.compile(r'[\n\s]+')
 
+# Splitting large text into chunks depending on the chunk_size.
+# Overlap index defines how much text overlap each chunk has to 
+# his predecessor to have better results from the OpenAI API call
 def split_into_chunks(text, chunk_size=1000, overlap_percentage=1):
     #split the web content into chunks of 1000 characters
     text = clean_text(text)
@@ -30,6 +35,7 @@ def split_into_chunks(text, chunk_size=1000, overlap_percentage=1):
 
     return chunks
 
+# Calls the OpenAI chat completion API
 def get_completion(prompt, model, temperature=0):
     messages = [{"role": "user", "content": prompt}]
     response = openai.ChatCompletion.create(
@@ -39,22 +45,17 @@ def get_completion(prompt, model, temperature=0):
     )
     return response.choices[0].message["content"]
 
+# Removes line breaks, extra spaces, tabs, etc from a text
 def clean_text(text):
-    # Remove line breaks and replace with spaces
-    text = text.replace('\n', ' ')
-    
-    # Normalize whitespace (remove extra spaces, tabs, etc.)
-    text = re.sub(r'\s+', ' ', text).strip()
+    # Replace line breaks and consecutive whitespace with a single space
+    text = re.sub(PATTERN, ' ', text).strip()
     
     # Handle special characters (replace with spaces or remove them)
-    special_characters = string.punctuation + "“”‘’"
-    text = ''.join(char if char not in special_characters else ' ' for char in text)
-    
-    # Remove consecutive spaces
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = ''.join(char if char not in SPECIAL_CHARACTERS else ' ' for char in text)
     
     return text
 
+# Reads cmd line arguments
 def get_arg(arg_name, default=None):
     """
     Safely reads a command line argument by name.
@@ -71,7 +72,8 @@ def get_arg(arg_name, default=None):
         # Add more argument descriptions here as needed
         sys.exit(0)
     try:
-        arg_value = sys.argv[sys.argv.index(arg_name) + 1]
+        arg_index = sys.argv.index(arg_name)
+        arg_value = sys.argv[arg_index + 1]
         return arg_value
     except (IndexError, ValueError):
         return default
@@ -88,11 +90,15 @@ def get_text_yt_transcript(id):
         print("Error: Unable to retrieve YouTube transcript.")
         print(e)
         sys.exit(1)
+
     # Concatenate all of the text segments of the transcript together
-    transcript_text = ""
+    transcript_text = []
     for x in transcript:
-        transcript_text += "-"
-        transcript_text += x["text"]
+        transcript_text.append(x["text"])
+
+    # Join the list at the end
+    transcript_text = "-".join(transcript_text)
+
     # Return the full transcript as a string
     return transcript_text
 
@@ -108,29 +114,22 @@ def show_text_summary(text):
         # tldr tag to be added at the end of each summary
         tldr_tag = "\n tl;dr:"
 
-        #split the web content into chunks to fit into the ChatGPT API limits
+        # Split the transcript into chunks to fit into the ChatGPT API limits
         string_chunks = split_into_chunks(text, 9000, 0.5)
 
-        #iterate through each chunk
-        responses = ""
-        for chunk in string_chunks:
-            chunk = chunk + tldr_tag
-            prompt = f"""You will be provided with text chunks of a YouTube Transscript delimited by triple backtips.\
-                        Your task is to summarize the chunks in an executive summary style and at most 100 words. \
-                        Reply in Language {lang}.\
-                        ```{chunk}```
-                        """
-            
-            # Call the OpenAI API to generate summary
-            responses = responses + get_completion(prompt, gptmodel)
-            
-        responses = clean_text(responses)
+        # Iterate through each chunk
+        print(f"Summarizing transcript using OpenAI completion API with model {gptmodel}")
+        responses = [get_completion(f"""Your task is to summarize the chunks in an executive summary style and at most 100 words. Reply in Language {lang}. ```{chunk}```""", gptmodel) for chunk in string_chunks]
+        complete_response_str = "\n".join(responses)
+        complete_response_str = clean_text(complete_response_str)
 
+        # Remove duplicate and redundant information
         prompt = f"""Your task is to remove duplicate or redundant information in the provided text delimited by triple backtips. \
                 Provide the answer in at most 5 bulletpoint sentences and keep the tone of the text and at most 100 words. \
                 Your task is to create smooth transitions between each bulletpoint.
-                ```{responses}```
+                ```{complete_response_str}```
                 """
+        print(f"Remove duplicate or redundant information using OpenAI completion API with model {gptmodel}")
         response = get_completion(prompt, gptmodel, 0.2)
         print(response)
 
@@ -139,18 +138,18 @@ def show_text_summary(text):
         print(e)
         return None
 
-#START OF SCRIPT
-#Reading out OpenAI API keys and organization
+# Reading out OpenAI API keys and organization
 try:
     with open("openai.toml","rb") as f:
         data = tomli.load(f)
-        openai.api_key=data["openai"]["apikey"]
-        openai.organization=data["openai"]["organization"]
-        gptmodel=data["openai"]["model"]
-        maxtokens = int(data["openai"]["maxtokens"])
 except:
     print("Error: Unable to read openai.toml file.")
     sys.exit(1)
+
+openai.api_key=data["openai"]["apikey"]
+openai.organization=data["openai"]["organization"]
+gptmodel=data["openai"]["model"]
+maxtokens = int(data["openai"]["maxtokens"])
 
 # Getting command line args
 lang = get_arg('--lang','English')
@@ -158,6 +157,7 @@ id = get_arg('--videoid', None)
 if(id == None):
     print("Type “--help\" for more information.")
     sys.exit(1)
+print(f"Downloading YouTube transcript")
 
 # Get YoutTube transcript as text and show summary
 show_text_summary(get_text_yt_transcript(id))

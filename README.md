@@ -8,7 +8,7 @@ This script retrieves the transcript of a YouTube video and uses the OpenAI AP
 * tomli
 
 # Useage 
-To use this script, you need to provide the --lang and the --videoid of the YoutTube video. You will find the videoid in the YouTube video URL.  
+To use this script, you need to provide the `--lang`and the `--videoid` of the YoutTube video. You will find the videoid in the YouTube video URL.  
 For example:  
 `$ python YT_AI_Sum.py --lang English --videoid 12345`  
 The script also requires an openai.toml file with the API key, organization details for the OpenAI API, model to be used and the maximum number of tokens per request.  

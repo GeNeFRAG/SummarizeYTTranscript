@@ -26,8 +26,8 @@ def get_text_yt_transcript(id):
         transcript = YouTubeTranscriptApi.get_transcript(id, languages=['en','en-US', 'de'])
     # If an exception is raised, print an error message and exit the program
     except Exception as e:
-        print("Error: Unable to retrieve YouTube transcript.")
-        print(e)
+        print(f"Error: Unable to retrieve YouTube transcript.")
+        print(f"{e}")
         sys.exit(1)
 
     # Concatenate all of the text segments of the transcript together
@@ -67,27 +67,27 @@ def show_text_summary(text):
         tldr_tag = "\n tl;dr:"
 
         # Split the transcript into chunks to fit into the ChatGPT API limits
-        string_chunks = commons.split_into_chunks(text, 9000, 0.5)
+        string_chunks = commons.split_into_chunks(text, maxtokens, 0.5)
 
         # Iterate through each chunk
         print(f"Summarizing transcript using OpenAI completion API with model {gptmodel}")
-        responses = [commons.get_completion(f"""Your task is to summarize the chunks in an executive summary style and at most 100 words. Reply in Language {lang}. ```{chunk}```""", gptmodel) for chunk in string_chunks]
+        responses = [commons.get_completion(f"""You will be provided with text from any webpage delimited by triple backtips. Your task is to summarize the chunks in a distinguished analytical summary style. Reply in Language {lang}. ```{chunk}```""", gptmodel, temperature) for chunk in string_chunks]
         complete_response_str = "\n".join(responses)
         complete_response_str = commons.clean_text(complete_response_str)
 
         # Remove duplicate and redundant information
         prompt = f"""Your task is to remove duplicate or redundant information in the provided text delimited by triple backtips. \
-                Provide the answer in at most 5 bulletpoint sentences and keep the tone of the text and at most 100 words. \
+                Provide the answer in at most 5 bulletpoint sentences and keep the tone of the text and at most 500 words. \
                 Your task is to create smooth transitions between each bulletpoint.
                 ```{complete_response_str}```
                 """
         print(f"Remove duplicate or redundant information using OpenAI completion API with model {gptmodel}")
-        response = commons.get_completion(prompt, gptmodel, 0.2)
-        print(response)
+        response = commons.get_completion(prompt, gptmodel, temperature)
+        print(f"{response}")
 
     except Exception as e:
-        print("Error: Unable to generate summary for the paper.")
-        print(e)
+        print(f"Error: Unable to generate summary for the paper.")
+        print(f"{e}")
         return None
 
 # Initialize GPT utilities module
@@ -97,20 +97,24 @@ commons = GPTCommons()
 try:
     with open("openai.toml","rb") as f:
         data = tomli.load(f)
-except:
-    print("Error: Unable to read openai.toml file.")
+except Exception as e:
+    print(f"Error: Unable to read openai.toml file.")
+    print(f"{e}")
     sys.exit(1)
-
 openai.api_key=data["openai"]["apikey"]
 openai.organization=data["openai"]["organization"]
 gptmodel=data["openai"]["model"]
 maxtokens = int(data["openai"]["maxtokens"])
+temperature = float(data["openai"]["temperature"])
+print(f"gptmodel={gptmodel}")
+print(f"maxtokens={maxtokens}")
+print(f"temperature={temperature}")
 
 # Getting command line args
 lang = commons.get_arg('--lang','English')
 id = commons.get_arg('--videoid', None)
 if(id == None):
-    print("Type “--help\" for more information.")
+    print(f"Type “--help\" for more information.")
     sys.exit(1)
 print(f"Downloading YouTube transcript")
 

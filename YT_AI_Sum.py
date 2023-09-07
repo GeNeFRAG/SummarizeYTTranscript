@@ -63,9 +63,6 @@ def show_text_summary(text):
     if text is None:
         return
     try:
-        # tldr tag to be added at the end of each summary
-        tldr_tag = "\n tl;dr:"
-
         # Split the transcript into chunks to fit into the ChatGPT API limits
         string_chunks = commons.split_into_chunks(text, maxtokens, 0.5)
 

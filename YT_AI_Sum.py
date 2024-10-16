@@ -68,9 +68,10 @@ def show_text_summary(text):
 
         # Iterate through each chunk
         print(f"Summarizing transcript using OpenAI completion API with model {gptmodel}")
-        responses = [commons.get_completion(f"""You will be provided with text from any webpage delimited by triple backtips. Your task is to summarize the chunks in a distinguished analytical summary style. Reply in Language {lang}. ```{chunk}```""", gptmodel, temperature) for chunk in string_chunks]
+        responses = [commons.get_chat_completion(f"""You will be provided with text from any webpage delimited by triple backtips. Your task is to summarize the chunks in a distinguished analytical summary style. Reply in Language {lang}. ```{chunk}```""", gptmodel, temperature) for chunk in string_chunks]
         complete_response_str = "\n".join(responses)
         complete_response_str = commons.clean_text(complete_response_str)
+        complete_response_str = commons.reduce_to_max_tokens(complete_response_str, maxtokens, gptmodel)
 
         # Remove duplicate and redundant information
         prompt = f"""Your task is to remove duplicate or redundant information in the provided text delimited by triple backtips. \
@@ -79,7 +80,7 @@ def show_text_summary(text):
                 ```{complete_response_str}```
                 """
         print(f"Remove duplicate or redundant information using OpenAI completion API with model {gptmodel}")
-        response = commons.get_completion(prompt, gptmodel, temperature)
+        response = commons.get_chat_completion(prompt, gptmodel, temperature)
         print(f"{response}")
 
     except Exception as e:

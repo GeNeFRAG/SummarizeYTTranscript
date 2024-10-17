@@ -1,7 +1,4 @@
 import sys
-
-import openai
-import tomli
 from youtube_transcript_api import YouTubeTranscriptApi
 from GPTCommons import GPTCommons
 
@@ -64,23 +61,20 @@ def show_text_summary(text):
         return
     try:
         # Split the transcript into chunks to fit into the ChatGPT API limits
-        string_chunks = commons.split_into_chunks(text, maxtokens, 0.5)
+        string_chunks = commons.split_into_chunks(text, commons.get_maxtokens(), 0.5)
 
         # Iterate through each chunk
-        print(f"Summarizing transcript using OpenAI completion API with model {gptmodel}")
-        responses = [commons.get_chat_completion(f"""You will be provided with text from any webpage delimited by triple backtips. Your task is to summarize the chunks in a distinguished analytical summary style. Reply in Language {lang}. ```{chunk}```""", gptmodel, temperature) for chunk in string_chunks]
+        print(f"Summarizing transcript using OpenAI completion API with model {commons.get_gptmodel()}")
+        responses = [commons.get_chat_completion(f"""Summarize the transcript in an analytical style. Reply in {lang}. Text: ```{chunk}```""") for chunk in string_chunks]
         complete_response_str = "\n".join(responses)
         complete_response_str = commons.clean_text(complete_response_str)
-        complete_response_str = commons.reduce_to_max_tokens(complete_response_str, maxtokens, gptmodel)
+        complete_response_str = commons.reduce_to_max_tokens(complete_response_str)
 
         # Remove duplicate and redundant information
-        prompt = f"""Your task is to remove duplicate or redundant information in the provided text delimited by triple backtips. \
-                Provide the answer in at most 5 bulletpoint sentences and keep the tone of the text and at most 500 words. \
-                Your task is to create smooth transitions between each bulletpoint.
-                ```{complete_response_str}```
-                """
-        print(f"Remove duplicate or redundant information using OpenAI completion API with model {gptmodel}")
-        response = commons.get_chat_completion(prompt, gptmodel, temperature)
+        print(f"Remove duplicate or redundant information using OpenAI completion API with model {commons.get_gptmodel()}") 
+        prompt = f"""Remove duplicate or redundant information from the text below, keeping the tone consistent. Provide the answer in at most 5 bullet points, with smooth transitions between each point, and a maximum of 500 words.
+                    Text: ```{complete_response_str}```"""
+        response = commons.get_chat_completion(prompt)
         print(f"{response}")
 
     except Exception as e:
@@ -88,25 +82,8 @@ def show_text_summary(text):
         print(f"{e}")
         return None
 
-# Initialize GPT utilities module
-commons = GPTCommons()
-
-# Reading out OpenAI API keys and organization
-try:
-    with open("openai.toml","rb") as f:
-        data = tomli.load(f)
-except Exception as e:
-    print(f"Error: Unable to read openai.toml file.")
-    print(f"{e}")
-    sys.exit(1)
-openai.api_key=data["openai"]["apikey"]
-openai.organization=data["openai"]["organization"]
-gptmodel=data["openai"]["model"]
-maxtokens = int(data["openai"]["maxtokens"])
-temperature = float(data["openai"]["temperature"])
-print(f"gptmodel={gptmodel}")
-print(f"maxtokens={maxtokens}")
-print(f"temperature={temperature}")
+# Initalize Utility class
+commons = GPTCommons.initialize_gpt_commons("openai.toml")
 
 # Getting command line args
 lang = commons.get_arg('--lang','English')

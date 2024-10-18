@@ -18,12 +18,14 @@ def get_text_yt_transcript(id):
     >>> print(transcript_text)
     'This is the transcript of the video...'
     """
-    # Attempt to retrieve the transcript of the video in English and German
+    print(f"Attempting to retrieve the transcript for video ID: {id}...")
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(id, languages=['en','en-US', 'de'])
-    # If an exception is raised, print an error message and exit the program
+        # Attempt to retrieve the transcript of the video in English and German
+        transcript = YouTubeTranscriptApi.get_transcript(id, languages=['en', 'en-US', 'de'])
+        print("Transcript successfully retrieved.")
     except Exception as e:
-        print(f"Error: Unable to retrieve YouTube transcript.")
+        # If an exception is raised, print an error message and exit the program
+        print("Error: Unable to retrieve YouTube transcript.")
         print(f"{e}")
         sys.exit(1)
 
@@ -38,12 +40,14 @@ def get_text_yt_transcript(id):
     # Return the full transcript as a string
     return transcript_text
 
-def show_text_summary(text):
+def show_text_summary(text, output_file=None):
     """
     Generates a text summary of a given input text, removes duplicate or redundant information, and prints the result.
+    If an output file is specified, writes the summary to the file instead of printing it.
 
     Args:
     text (str): The input text to be summarized and cleaned.
+    output_file (str, optional): The path to the file where the summary should be written. Defaults to None.
 
     Returns:
     None
@@ -58,46 +62,65 @@ def show_text_summary(text):
     The function relies on the 'split_into_chunks' and 'get_completion' functions, and it uses a specific model ('gptmodel') and language ('lang') for text generation.
     """
     if text is None:
+        print("No text found to summarize.")
         return
     try:
         # Split the transcript into chunks to fit into the ChatGPT API limits
+        print("Splitting the transcript into manageable chunks...")
         string_chunks = commons.split_into_chunks(text, commons.get_maxtokens(), 0.5)
 
         # Iterate through each chunk
-        print(f"Summarizing transcript using OpenAI completion API with model {commons.get_gptmodel()}")
+        print(f"Summarizing transcript using OpenAI completion API with model {commons.get_gptmodel()}...")
         responses = [commons.get_chat_completion(f"""Summarize the transcript in an analytical style. Reply in {lang}. Text: ```{chunk}```""") for chunk in string_chunks]
         complete_response_str = "\n".join(responses)
         complete_response_str = commons.clean_text(complete_response_str)
+
+        # Reduce the text to the maximum number of tokens
+        print("Reducing the text to the maximum number of tokens...")
         complete_response_str = commons.reduce_to_max_tokens(complete_response_str)
 
         # Remove duplicate and redundant information
-        print(f"Remove duplicate or redundant information using OpenAI completion API with model {commons.get_gptmodel()}") 
+        print(f"Removing duplicate or redundant information using OpenAI completion API with model {commons.get_gptmodel()}...") 
         prompt = f"""Remove duplicate or redundant information from the text below, keeping the tone consistent. Provide the answer in at most 5 bullet points, with smooth transitions between each point, and a maximum of 500 words.
                     Text: ```{complete_response_str}```"""
         response = commons.get_chat_completion(prompt)
-        print(f"{response}")
+        
+        if output_file:
+            print(f"Writing summary to output file: {output_file}")
+            with open(output_file, 'w') as f:
+                f.write(response)
+            print("Summary written to file successfully.")
+        else:
+            print("Summary generation complete. Here is the summarized text:")
+            print(response)
 
     except Exception as e:
-        print(f"Error: Unable to generate summary for the paper.")
+        print("Error: Unable to generate summary for the transcript.")
         print(f"{e}")
         return None
 
-# Initalize Utility class
+# Initialize Utility class
+print("Initializing GPTCommons utility class...")
 commons = GPTCommons.initialize_gpt_commons("openai.toml")
 
 arg_descriptions = {
     "--help": "Help",
     "--lang": "Language (default: English)",
-    "--videoid": "Youtube Video ID"
+    "--videoid": "YouTube Video ID",
+    "--output": "Output file name"
 }
 
 # Getting command line args
+print("Retrieving command-line arguments...")
 lang = commons.get_arg('--lang', arg_descriptions, 'English')
 id = commons.get_arg('--videoid', arg_descriptions, None)
-if(id == None):
-    print(f"Type “--help\" for more information.")
-    sys.exit(1)
-print(f"Downloading YouTube transcript")
+output_file = commons.get_arg('--output', arg_descriptions, None)
 
-# Get YoutTube transcript as text and show summary
-show_text_summary(get_text_yt_transcript(id))
+if id is None:
+    print("Error: YouTube Video ID not provided. Type '--help' for more information.")
+    sys.exit(1)
+    
+print(f"Downloading YouTube transcript for video ID: {id}...")
+
+# Get YouTube transcript as text and show summary
+show_text_summary(get_text_yt_transcript(id), output_file)

@@ -1,5 +1,5 @@
 __pycache__/
-*.txt
+summary.txt
 openai.toml
 openai.toml
 summary.html

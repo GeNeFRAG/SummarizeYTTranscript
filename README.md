@@ -37,3 +37,15 @@ The script requires an `openai.toml` file with API key, organization details, mo
 ### Example
 
 `$ python YT_AI_Sum.py --lang English --videoid 23idx333s --output yourfile.html --html True --detail_level high --max_words 500`
+
+## Installation
+
+To install the dependencies listed in the requirements.txt file, you can use the following command:
+
+`pip install -r requirements.txt`
+
+## Including GPTCommons.py
+
+Ensure that the GPTCommons.py file is in your Python path
+
+`git clone https://github.com/GeNeFRAG/GPT_commons.git`

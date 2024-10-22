@@ -1,5 +1,4 @@
 youtube_transcript_api
-re
 tiktoken
 tomli
 requests

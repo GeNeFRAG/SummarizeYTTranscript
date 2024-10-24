@@ -104,11 +104,6 @@ def show_text_summary(text, output_file=None, to_html=False,detail_level='analyt
 print("Initializing GPTCommons utility class...")
 commons = GPTCommons.initialize_gpt_commons("openai.toml")
 
-# Check if the model exisits
-print("Checking if the model exists...")
-if not commons.is_valid_gpt_model(commons.get_gptmodel()):
-    sys.exit(1) 
-
 arg_descriptions = {
     "--help": "Help",
     "--lang": "Language (default: English)",
@@ -135,6 +130,11 @@ try:
 except ValueError:
     print("Error: Invalid value for --max_words. It must be an integer. Using default value of 200.")
     max_words = 200
+
+# Check if the model exisits
+print("Checking if the model exists...")
+if not commons.is_valid_gpt_model(commons.get_gptmodel()):
+    sys.exit(1) 
 
 print(f"Downloading YouTube transcript for video ID: {id}...")
 
